@@ -17,6 +17,16 @@ BinominalHeap<T, Compare>::BinominalHeap(const Compare& cmp) {
 }
 
 template<class T, class Compare>
+BinominalHeap<T, Compare>::BinominalHeap(const T* data_arr, const int size, const Compare& cmp) {
+    arr_capacity = size;
+    arr_size = size;
+    cmp_func = cmp;
+    arr = new T[arr_capacity];
+    std::copy(data_arr, data_arr + size, arr);
+    build();
+}
+
+template<class T, class Compare>
 BinominalHeap<T, Compare>::~BinominalHeap() {
     delete[] arr;
 }
@@ -43,7 +53,7 @@ T BinominalHeap<T, Compare>::pop() {
 }
 
 template<class T, class Compare>
-T BinominalHeap<T, Compare>::top() const {
+const T& BinominalHeap<T, Compare>::top() const {
     assert(!isEmpty());
     
     return arr[0];
@@ -56,6 +66,13 @@ void BinominalHeap<T, Compare>::extendArray() {
     std::copy(arr, arr + arr_size, tmp);
     delete[] arr;
     arr = tmp;
+}
+
+template<class T, class Compare>
+void BinominalHeap<T, Compare>::build() {
+    for (int i = 0; i < arr_size / 2; ++i) {
+        shiftDown(i);
+    }
 }
 
 template<class T, class Compare>

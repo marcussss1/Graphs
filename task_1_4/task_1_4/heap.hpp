@@ -32,11 +32,12 @@ template<class T, class Compare = IsGreaterFunctor<T>>
 class BinominalHeap {
 public:
     BinominalHeap(const Compare& cmp = Compare());
+    BinominalHeap(const T* data_arr, const int size, const Compare& cmp = Compare());
     ~BinominalHeap();
     
     void push(const T& data);
     T pop();
-    T top() const;
+    const T& top() const;
     
     bool isEmpty() const { return (arr_size == 0); }
     int size() const { return arr_size; }
@@ -50,6 +51,7 @@ private:
     bool isFull() const { return (arr_size == arr_capacity); }
     void extendArray();
     
+    void build();
     void shiftUp(int index);
     void shiftDown(int index);
 };
