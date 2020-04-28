@@ -6,6 +6,22 @@
 //  Copyright © 2020 Mac-HOME. All rights reserved.
 //
 
+
+/*
+ Реализуйте структуру данных типа “множество строк” на основе динамической
+ хеш-таблицы с открытой адресацией. Хранимые строки непустые и состоят из
+ строчных латинских букв.
+ 
+ Хеш-функция строки должна быть реализована с помощью вычисления значения
+ многочлена методом Горнера.
+
+ Структура данных должна поддерживать операции добавления строки в множество,
+ удаления строки из множества и проверки принадлежности данной строки множеству.
+
+ Для разрешения коллизий используйте квадратичное пробирование. i-ая проба
+ g(k, i)=g(k, i-1) + i (mod m). m - степень двойки.
+*/
+
 #include <iostream>
 #include <vector>
 #include <string>
@@ -35,6 +51,8 @@ struct HashTableCell {
     
     bool is_full() const { return state == FULL; }
     bool is_empty() const { return state == EMPTY; }
+    void make_full() { state = FULL; }
+    void make_del() { state = DELETED; }
 };
 
 template<class T, class H>
@@ -78,7 +96,7 @@ bool HashTable<T, H>::has(const T& key) const {
 
 template<class T, class H>
 bool HashTable<T, H>::add(const T& key) {
-    if (keys_count * 3 > 2 * table.size()) {
+    if (keys_count * 4 > 3 * table.size()) {
         grow();
     }
     
@@ -101,13 +119,28 @@ bool HashTable<T, H>::add(const T& key) {
         }
         hash = calc_next_index(hash, i);
     }
-    table[cell_to_add]->key = key;
-    table[cell_to_add]->make_full();
+    cell_to_add->key = key;
+    cell_to_add->make_full();
+    ++keys_count;
     return true;
 }
 
 template<class T, class H>
-bool HashTable<T, H>::remove(const T& key) {}
+bool HashTable<T, H>::remove(const T& key) {
+    unsigned int hash = hasher(key) % table.size();
+    
+    for (int i = 0; i < table.size(); ++i) {
+        if (table[hash].is_full() && table[hash].key == key) {
+            table[hash].make_del();
+            --keys_count;
+            return true;
+        } else if (table[hash].is_empty()) {
+            break;
+        }
+        hash = calc_next_index(hash, i);
+    }
+    return false;
+}
 
 template<class T, class H>
 unsigned int HashTable<T, H>::calc_next_index(int hash, int iter) const {
@@ -115,7 +148,16 @@ unsigned int HashTable<T, H>::calc_next_index(int hash, int iter) const {
 }
 
 template<class T, class H>
-void HashTable<T, H>::grow() {}
+void HashTable<T, H>::grow() {
+    vector<HashTableCell<T>> prev_table = table;
+    table = vector<HashTableCell<T>>(table.size() * 2);
+    
+    for (int i = 0; i < prev_table.size(); ++i) {
+        if (prev_table[i].is_full()) {
+            add(prev_table[i].key);
+        }
+    }
+}
 
 struct StringHasher {
     unsigned int operator()(const string& key) const {
@@ -133,15 +175,15 @@ int main(int argc, const char * argv[]) {
     char operation = 0;
     string word;
 
-    while( cin >> operation >> word ) {
-        if( operation == '+' )
-            cout << (table.add( word ) ? "OK" : "FAIL") << "\n";
-        else if( operation == '-' )
-            cout << (table.remove( word ) ? "OK" : "FAIL") << "\n";
-        else if( operation == '?' )
-            cout << (table.has( word ) ? "OK" : "FAIL") << "\n";
+    while(cin >> operation >> word) {
+        if(operation == '+')
+            cout << (table.add(word) ? "OK" : "FAIL") << "\n";
+        else if(operation == '-')
+            cout << (table.remove(word) ? "OK" : "FAIL") << "\n";
+        else if(operation == '?')
+            cout << (table.has(word) ? "OK" : "FAIL") << "\n";
         else
-            assert( false );
+            assert(false);
     }
     
     return 0;
