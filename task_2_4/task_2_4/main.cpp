@@ -19,6 +19,18 @@
  */
 
 #include <iostream>
+#include <assert.h>
+
+using std::cin;
+using std::cout;
+
+template<class T>
+class DefaultAVLFunctor {
+public:
+    bool operator() (const T& l, const T& r) {
+        return l < r;
+    }
+};
 
 template<class T>
 struct AVLTreeNode {
@@ -41,7 +53,7 @@ struct AVLTreeNode {
         key(_key) {}
 };
 
-template<class T, class Compare>
+template<class T, class Compare = DefaultAVLFunctor<T>>
 class AVLTree {
 public:
     AVLTree();
@@ -55,11 +67,16 @@ public:
     const T& get_k_stat(int k) const;
     
 private:
+    AVLTreeNode<T>* add_node(AVLTreeNode<T>* node, const T& key);
+    AVLTreeNode<T>* remove_node(AVLTreeNode<T>* node, const T& key);
     void remove_all(AVLTreeNode<T>* node);
-    AVLTreeNode<T>* insert(AVLTreeNode<T>* node, const T& key);
     
     AVLTreeNode<T>* rotate_left(AVLTreeNode<T>* node);
     AVLTreeNode<T>* rotate_right(AVLTreeNode<T>* node);
+    
+    AVLTreeNode<T>* remove_min(AVLTreeNode<T>* node);
+    AVLTreeNode<T>* remove_max(AVLTreeNode<T>* node);
+    
     unsigned int height(AVLTreeNode<T>* node);
     void fix_height(AVLTreeNode<T>* node);
     int balance_factor(AVLTreeNode<T>* node);
@@ -85,12 +102,12 @@ AVLTree<T, Compare>::~AVLTree() {
 
 template<class T, class Compare>
 void AVLTree<T, Compare>::add(const T& key) {
-    insert(key);
+    add_node(root, key);
 }
 
 template<class T, class Compare>
 void AVLTree<T, Compare>::remove(const T& key) {
-    
+    remove_node(root, key);
 }
 
 template<class T, class Compare>
@@ -99,25 +116,57 @@ const T& AVLTree<T, Compare>::get_k_stat(int k) const {
 }
 
 template<class T, class Compare>
-void AVLTree<T, Compare>::remove_all(AVLTreeNode<T>* node) {
+AVLTreeNode<T>* AVLTree<T, Compare>::
+add_node(AVLTreeNode<T>* node, const T& key) {
     if (!node) {
+        return new AVLTreeNode<T>(key);
+    }
+    if (key < node->key) {
+        node->left = add_node(node->left, key);
+    } else {
+        node->right = add_node(node->right, key);
+    }
+    return balance(node);
+}
+
+template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::
+remove_node(AVLTreeNode<T>* node, const T& key) {
+    if (!node) {
+        return nullptr;
+    }
+    
+    T cur_node = node->key;
+    if (key < cur_node) {
+        node->left = remove_node(node->left, key);
+    } else if (key != cur_node) {
+        node->right = remove_node(node->right, key);
+    } else {
+        AVLTreeNode<T>* left = node->left;
+        AVLTreeNode<T>* right = node->right;
+        delete node;
+        if (!left) {
+            return right;
+        }
+        if (!right) {
+            return left;
+        }
+        if (height(left) > height(right)) {
+            node = remove_max(left);
+        } else {
+            node = remove_min(right);
+        }
+    }
+    return balance(node);
+}
+
+template<class T, class Compare>
+void AVLTree<T, Compare>::remove_all(AVLTreeNode<T>* node) {
+    if (node) {
         remove_all(node->left);
         remove_all(node->right);
         delete(node);
     }
-}
-
-template<class T, class Compare>
-AVLTreeNode<T>* AVLTree<T, Compare>::insert(AVLTreeNode<T>* node, const T& key) {
-    if (!node) {
-        return AVLTreeNode<T>(key);
-    }
-    if (key < node->key) {
-        node->left = insert(node->left, key);
-    } else {
-        node->right = insert(node->right, key);
-    }
-    return balance(node);
 }
 
 template<class T, class Compare>
@@ -141,6 +190,38 @@ AVLTreeNode<T>* AVLTree<T, Compare>::rotate_right(AVLTreeNode<T>* node) {
 }
 
 template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::remove_min(AVLTreeNode<T>* node) {
+    AVLTreeNode<T>* cur_node = node->left;
+    if (!cur_node) {
+        return node;
+    }
+    
+    AVLTreeNode<T>* prev_node = node;
+    while (cur_node->left) {
+        prev_node = cur_node;
+        cur_node = cur_node->left;
+    }
+    prev_node->left = cur_node->right;
+    return cur_node;
+}
+
+template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::remove_max(AVLTreeNode<T>* node) {
+    AVLTreeNode<T>* cur_node = node->right;
+    if (!cur_node) {
+        return node;
+    }
+    
+    AVLTreeNode<T>* prev_node = node;
+    while (cur_node->right) {
+        prev_node = cur_node;
+        cur_node = cur_node->right;
+    }
+    prev_node->right = cur_node->left;
+    return cur_node;
+}
+
+template<class T, class Compare>
 unsigned int AVLTree<T, Compare>::height(AVLTreeNode<T>* node) {
     return node ? node->height : 0;
 }
@@ -153,7 +234,7 @@ void AVLTree<T, Compare>::fix_height(AVLTreeNode<T>* node) {
 }
 
 template<class T, class Compare>
-int balance_factor(AVLTreeNode<T>* node) {
+int AVLTree<T, Compare>::balance_factor(AVLTreeNode<T>* node) {
     return height(node->right) - height(node->left);
 }
 
@@ -175,5 +256,18 @@ AVLTreeNode<T>* AVLTree<T, Compare>::balance(AVLTreeNode<T>* node) {
 }
 
 int main(int argc, const char * argv[]) {
+    AVLTree<int, DefaultAVLFunctor<int>> tree;
+    int n = 0;
+    cin >> n;
+    
+    for (int i = 0, num = 0, k = 0; i < n; ++i) {
+        cin >> num >> k;
+        if (num >= 0) {
+            tree.add(num);
+        } else {
+            tree.remove(num);
+        }
+    }
+    
     return 0;
 }
