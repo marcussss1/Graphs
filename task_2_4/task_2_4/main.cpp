@@ -65,20 +65,10 @@ public:
     void add(const T& key);
     void remove(const T& key);
     const T& select(int k) const;
-     void show() const;
+    void show() const;
     
 private:
-     void show_node(AVLTreeNode<T>* node, int gap) const;
-    AVLTreeNode<T>* add_node(AVLTreeNode<T>* node, const T& key);
-    AVLTreeNode<T>* remove_node(AVLTreeNode<T>* node, const T& key);
-    void remove_all(AVLTreeNode<T>* node);
-    
-    AVLTreeNode<T>* rotate_left(AVLTreeNode<T>* node);
-    AVLTreeNode<T>* rotate_right(AVLTreeNode<T>* node);
-    
-    AVLTreeNode<T>* pop_min(AVLTreeNode<T>* node);
-    AVLTreeNode<T>* pop_max(AVLTreeNode<T>* node);
-    
+    void show_node(AVLTreeNode<T>* node, int gap) const;
     unsigned int height(const AVLTreeNode<T>* node) const;
     void fix_height(AVLTreeNode<T>* node);
     
@@ -87,6 +77,16 @@ private:
     
     int balance_factor(const AVLTreeNode<T>* node) const;
     AVLTreeNode<T>* balance(AVLTreeNode<T>* node);
+    
+    AVLTreeNode<T>* rotate_left(AVLTreeNode<T>* node);
+    AVLTreeNode<T>* rotate_right(AVLTreeNode<T>* node);
+    AVLTreeNode<T>* add_node(AVLTreeNode<T>* node, const T& key);
+    
+    AVLTreeNode<T>* pop_min(AVLTreeNode<T>* node, AVLTreeNode<T>*& min_node);
+    AVLTreeNode<T>* pop_max(AVLTreeNode<T>* node, AVLTreeNode<T>*& max_node);
+    AVLTreeNode<T>* remove_node(AVLTreeNode<T>* node, const T& key);
+    
+    void remove_all(AVLTreeNode<T>* node);
     
     AVLTreeNode<T>* root;
     Compare cmp_func;
@@ -150,132 +150,6 @@ const T& AVLTree<T, Compare>::select(int k) const {
 }
 
 template<class T, class Compare>
-AVLTreeNode<T>* AVLTree<T, Compare>::
-add_node(AVLTreeNode<T>* node, const T& key) {
-    if (!node) {
-        return new AVLTreeNode<T>(key);
-    }
-    if (cmp_func(key, node->key)) {
-        node->left = add_node(node->left, key);
-    } else {
-        node->right = add_node(node->right, key);
-    }
-    return balance(node);
-}
-
-template<class T, class Compare>
-AVLTreeNode<T>* AVLTree<T, Compare>::
-remove_node(AVLTreeNode<T>* node, const T& key) {
-    if (!node) {
-        return node;
-    }
-    
-    T cur_node = node->key;
-    if (cmp_func(key, cur_node)) {
-        node->left = remove_node(node->left, key);
-    } else if (key != cur_node) {
-        node->right = remove_node(node->right, key);
-    } else {
-        AVLTreeNode<T>* left = node->left;
-        AVLTreeNode<T>* right = node->right;
-        delete node;
-        if (!left) {
-            return right;
-        }
-        if (!right) {
-            return left;
-        }
-        if (height(left) > height(right)) {
-            node = pop_max(left);
-            node->right = right;
-            if (node != left) {
-                node->left = left;
-            }
-        } else {
-            node = pop_min(right);
-            node->left = left;
-            if (node != right) {
-                node->right = right;
-            }
-        }
-    }
-    return balance(node);
-}
-
-template<class T, class Compare>
-void AVLTree<T, Compare>::remove_all(AVLTreeNode<T>* node) {
-    if (node) {
-        remove_all(node->left);
-        remove_all(node->right);
-        delete(node);
-    }
-}
-
-template<class T, class Compare>
-AVLTreeNode<T>* AVLTree<T, Compare>::rotate_left(AVLTreeNode<T>* node) {
-    assert(node);
-    AVLTreeNode<T>* tmp = node->right;
-    node->right = tmp->left;
-    tmp->left = node;
-    fix_height(node);
-    fix_height(tmp);
-    fix_rank(node);
-    fix_rank(tmp);
-    return tmp;
-}
-
-template<class T, class Compare>
-AVLTreeNode<T>* AVLTree<T, Compare>::rotate_right(AVLTreeNode<T>* node) {
-    assert(node);
-    AVLTreeNode<T>* tmp = node->left;
-    node->left = tmp->right;
-    tmp->right = node;
-    fix_height(node);
-    fix_height(tmp);
-    fix_rank(node);
-    fix_rank(tmp);
-    return tmp;
-}
-
-template<class T, class Compare>
-AVLTreeNode<T>* AVLTree<T, Compare>::pop_min(AVLTreeNode<T>* node) {
-    if (!node) {
-        return node;
-    }
-    AVLTreeNode<T>* cur_node = node->left;
-    if (!cur_node) {
-        return node;
-    }
-    
-    AVLTreeNode<T>* prev_node = node;
-    while (cur_node->left) {
-        prev_node = cur_node;
-        cur_node = cur_node->left;
-    }
-    prev_node->left = cur_node->right;
-    return cur_node;
-}
-
-template<class T, class Compare>
-AVLTreeNode<T>* AVLTree<T, Compare>::pop_max(AVLTreeNode<T>* node) {
-    if (!node) {
-        return node;
-    }
-    AVLTreeNode<T>* cur_node = node->right;
-    if (!cur_node) {
-        return node;
-    }
-    
-    AVLTreeNode<T>* prev_node = node;
-    while (cur_node->right) {
-        prev_node = cur_node;
-        cur_node = cur_node->right;
-    }
-    prev_node->right = cur_node->left;
-    return cur_node;
-}
-
-template<class T, class Compare>
 unsigned int AVLTree<T, Compare>::height(const AVLTreeNode<T>* node) const {
     return node ? node->height : 0;
 }
@@ -326,7 +200,155 @@ AVLTreeNode<T>* AVLTree<T, Compare>::balance(AVLTreeNode<T>* node) {
     return node;
 }
 
+template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::rotate_left(AVLTreeNode<T>* node) {
+    assert(node);
+    AVLTreeNode<T>* tmp = node->right;
+    node->right = tmp->left;
+    tmp->left = node;
+    fix_height(node);
+    fix_height(tmp);
+    fix_rank(node);
+    fix_rank(tmp);
+    return tmp;
+}
+
+template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::rotate_right(AVLTreeNode<T>* node) {
+    assert(node);
+    AVLTreeNode<T>* tmp = node->left;
+    node->left = tmp->right;
+    tmp->right = node;
+    fix_height(node);
+    fix_height(tmp);
+    fix_rank(node);
+    fix_rank(tmp);
+    return tmp;
+}
+
+template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::
+add_node(AVLTreeNode<T>* node, const T& key) {
+    if (!node) {
+        return new AVLTreeNode<T>(key);
+    }
+    if (cmp_func(key, node->key)) {
+        node->left = add_node(node->left, key);
+    } else {
+        node->right = add_node(node->right, key);
+    }
+    return balance(node);
+}
+
+template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::pop_min(AVLTreeNode<T>* node, AVLTreeNode<T>*& min_node) {
+    if (!node) {
+        min_node = nullptr;
+        return nullptr;
+    }
+    if (!node->left) {
+        min_node = node;
+        return node->right;
+    }
+    node->left = pop_min(node->left, min_node);
+    return balance(node);
+}
+
+template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::pop_max(AVLTreeNode<T>* node, AVLTreeNode<T>*& max_node) {
+    if (!node) {
+        max_node = nullptr;
+        return nullptr;
+    }
+    if (!node->right) {
+        max_node = node;
+        return node->left;
+    }
+    node->right = pop_min(node->right, max_node);
+    return balance(node);
+}
+
+template<class T, class Compare>
+AVLTreeNode<T>* AVLTree<T, Compare>::
+remove_node(AVLTreeNode<T>* node, const T& key) {
+    if (!node) {
+        return nullptr;
+    }
+    if (cmp_func(key, node->key)) {
+        node->left = remove_node(node->left, key);
+    } else if (key != node->key) {
+        node->right = remove_node(node->right, key);
+    } else {
+        AVLTreeNode<T>* left = node->left;
+        AVLTreeNode<T>* right = node->right;
+        if (!left) {
+            delete node;
+            return right;
+        }
+        if (!right) {
+            delete node;
+            return left;
+        }
+        AVLTreeNode<T>* tmp_node;
+        if (height(left) > height(right)) {
+            node->left = pop_max(left, tmp_node);
+        } else {
+            node->right = pop_min(right, tmp_node);
+        }
+        node->key = tmp_node->key;
+        delete tmp_node;
+    }
+    return balance(node);
+}
+
+template<class T, class Compare>
+void AVLTree<T, Compare>::remove_all(AVLTreeNode<T>* node) {
+    if (node) {
+        remove_all(node->left);
+        remove_all(node->right);
+        delete(node);
+    }
+}
+
+bool test() {
+    AVLTree<unsigned int, DefaultAVLFunctor<int>> tree;
+    int n = 20;
+    int arr_num[20] = {1, 4, 5, 2, 6, -2, -1, -4, -6, 7, 9, 2, 1, -5, -7, -9, 10, -12, 10, 20};
+    int arr_k[20] = {0, 0, 0, 1, 2, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1};
+    int answers[20] = {1, 1, 1, 2, 4, 1, 4, 5, 5, 7, 7, 5, 1, 1, 1, 2, 2, 2, 1, 2};
+    
+    for (int i = 0, num = 0, k = 0; i < n; ++i) {
+        num = arr_num[i];
+        k = arr_k[i];
+        
+        cout << "add " << num << "\n";
+        
+        if (num >= 0) {
+            tree.add(num);
+        } else {
+            tree.remove(num * -1);
+        }
+        cout << "select " << k << " res - " << tree.select(k) << "\n";
+        if (tree.select(k) != answers[i]) {
+            return false;
+        }
+        tree.show();
+        cout << "\n\n";
+    }
+    return true;
+}
+
 int main(int argc, const char * argv[]) {
+    if (test()) {
+        cout << "OK\n";
+    } else {
+        cout << "FAIL\n";
+    }
+    return 0;
+    
+    
+    
+    
     AVLTree<unsigned int, DefaultAVLFunctor<int>> tree;
     int n = 0;
     cin >> n;
