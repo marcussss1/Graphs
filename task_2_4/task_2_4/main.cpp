@@ -310,45 +310,7 @@ void AVLTree<T, Compare>::remove_all(AVLTreeNode<T>* node) {
     }
 }
 
-bool test() {
-    AVLTree<unsigned int, DefaultAVLFunctor<int>> tree;
-    int n = 20;
-    int arr_num[20] = {1, 4, 5, 2, 6, -2, -1, -4, -6, 7, 9, 2, 1, -5, -7, -9, 10, -12, 10, 20};
-    int arr_k[20] = {0, 0, 0, 1, 2, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1, 0, 1};
-    int answers[20] = {1, 1, 1, 2, 4, 1, 4, 5, 5, 7, 7, 5, 1, 1, 1, 2, 2, 2, 1, 2};
-    
-    for (int i = 0, num = 0, k = 0; i < n; ++i) {
-        num = arr_num[i];
-        k = arr_k[i];
-        
-        cout << "add " << num << "\n";
-        
-        if (num >= 0) {
-            tree.add(num);
-        } else {
-            tree.remove(num * -1);
-        }
-        cout << "select " << k << " res - " << tree.select(k) << "\n";
-        if (tree.select(k) != answers[i]) {
-            return false;
-        }
-        tree.show();
-        cout << "\n\n";
-    }
-    return true;
-}
-
 int main(int argc, const char * argv[]) {
-//    if (test()) {
-//        cout << "OK\n";
-//    } else {
-//        cout << "FAIL\n";
-//    }
-//    return 0;
-    
-    
-    
-    
     AVLTree<unsigned int, DefaultAVLFunctor<int>> tree;
     int n = 0;
     cin >> n;
@@ -360,8 +322,8 @@ int main(int argc, const char * argv[]) {
         } else {
             tree.remove(num * -1);
         }
-//        tree.show();
-//        cout << "\n\n";
+        // tree.show();
+        // cout << "\n\n";
         cout << tree.select(k) << "\n";
     }
     
