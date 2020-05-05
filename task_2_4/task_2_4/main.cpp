@@ -190,12 +190,12 @@ AVLTreeNode<T>* AVLTree<T, Compare>::balance(AVLTreeNode<T>* node) {
         if (balance_factor(node->right) < 0) {
             node->right = rotate_right(node->right);
         }
-        node =  rotate_left(node);
+        node = rotate_left(node);
     } else if (balance_factor(node) == -2) {
         if (balance_factor(node->left) > 0) {
             node->left = rotate_left(node->left);
         }
-        node =  rotate_right(node);
+        node = rotate_right(node);
     }
     return node;
 }
@@ -264,7 +264,7 @@ AVLTreeNode<T>* AVLTree<T, Compare>::pop_max(AVLTreeNode<T>* node, AVLTreeNode<T
         max_node = node;
         return node->left;
     }
-    node->right = pop_min(node->right, max_node);
+    node->right = pop_max(node->right, max_node);
     return balance(node);
 }
 
@@ -339,12 +339,12 @@ bool test() {
 }
 
 int main(int argc, const char * argv[]) {
-    if (test()) {
-        cout << "OK\n";
-    } else {
-        cout << "FAIL\n";
-    }
-    return 0;
+//    if (test()) {
+//        cout << "OK\n";
+//    } else {
+//        cout << "FAIL\n";
+//    }
+//    return 0;
     
     
     
