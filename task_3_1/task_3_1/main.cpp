@@ -90,6 +90,14 @@ int main(int argc, const char * argv[]) {
     arcg.AddEdge( 4, 2 );
 
     BFS( arcg, 0, []( int v ) { std::cout << v << " "; } );
+    std::cout << "\n";
+    
+    listg = ListGraph(arcg);
+    matrixg = MatrixGraph(listg);
+    setg = SetGraph(matrixg);
+    
+    BFS( setg, 0, []( int v ) { std::cout << v << " "; } );
+    std::cout << "\n";
     
     return 0;
 }
