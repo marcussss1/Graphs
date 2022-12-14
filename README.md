@@ -1,2 +1,0 @@
-# Algorithms-course
-Technopark course
