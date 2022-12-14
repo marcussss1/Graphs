@@ -1,3 +1,0 @@
-/home/marcussss1/Algorithms-course/build/CMakeFiles/graph.dir
-/home/marcussss1/Algorithms-course/build/CMakeFiles/edit_cache.dir
-/home/marcussss1/Algorithms-course/build/CMakeFiles/rebuild_cache.dir
